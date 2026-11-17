@@ -1,0 +1,54 @@
+# === Keil uVision Тимчасові файли та логи компіляції ===
+*.bak
+*.dep
+*.iex
+*.lnp
+*.mpf
+*.mpw
+*.crf
+*.d
+*.o
+*.obj
+*.omf
+*.plg
+*.htm
+*.map
+*.lst
+*.bct
+*.l2h
+*.fed
+*.axf
+*._ia
+*.i
+*.sct
+
+# === Файли налаштувань користувача (ОБОВ'ЯЗКОВО ІГНОРУВАТИ) ===
+# Ці файли зберігають стан вікон Keil, вкладки та налаштування дебагеру конкретно під ваш ПК.
+# Якщо їх не ігнорувати, перемикання гілок буде викликати помилки.
+*.uvopt
+*.uvoptx
+*.uvgui.*
+*.pco
+
+# === Папки з результатами збирання (Вихідні бінарники) ===
+# Зазвичай Keil складає об'єктні файли та прошивки в папки Object, List, Objects, Listings, Build або Output
+soft/[Oo]bjects/
+soft/[Ll]istings/
+soft/[Oo]utput/
+soft/[Bb]uild/
+soft/[Dd]ebug/
+soft/[Rr]elease/
+
+# === Вихідні файли прошивок (якщо вони створюються поза папками вище) ===
+*.hex
+*.bin
+*.elf
+*.axf
+
+# === Тимчасові файли ОС ===
+.DS_Store
+Thumbs.db
+
+STM32F103CBT6.BAT
+JLinkLog.txt
+soft/DebugConfig/
