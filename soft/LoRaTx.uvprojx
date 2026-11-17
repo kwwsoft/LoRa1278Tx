@@ -395,6 +395,16 @@
               <FileType>1</FileType>
               <FilePath>.\my_usart.c</FilePath>
             </File>
+            <File>
+              <FileName>my_tim2_delay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\my_tim2_delay.c</FilePath>
+            </File>
+            <File>
+              <FileName>my_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\my_rtc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

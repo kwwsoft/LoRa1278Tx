@@ -1,11 +1,15 @@
 #define DEBUG_CODE
-//
+//*****************************************************************************
 #include "stm32f10x.h"                  // Device header
 #include "misc.h"                       // Keil::Device:StdPeriph Drivers:Framework
+#include "my_tim2_delay.h"
 #include "my_usart.h"
+#include "my_rtc.h"
+//*****************************************************************************
 
 
-
+RTC_DateTime_t now;
+//*****************************************************************************
 int main(){
 	//remap PA15 and PB3 from JTAG to normal pins
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -20,6 +24,17 @@ int main(){
 	#ifdef DEBUG_CODE
 		my_usart_send_buffer("\r\n--- Start application ---\r\n");
 	#endif
+	//init delay lib
+	my_delay_TIM2_init();
+	//init rtc for sleep and date/time
+	my_RTC_Clock_Init();
+	//read date
+	my_RTC_GetDateTime(&now);
+	//if date is wrong - set compilation date/time
+	if (now.year < 2026){
+		my_RTC_SetCompileTime();
+	}
+	
 
 
 	
