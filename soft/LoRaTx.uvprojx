@@ -410,6 +410,11 @@
               <FileType>1</FileType>
               <FilePath>.\my_global.c</FilePath>
             </File>
+            <File>
+              <FileName>my_i2c_bmp280.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\my_i2c_bmp280.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
