@@ -11,8 +11,15 @@
 #define RTC_BKP_MAGIC_VALUE 0xA5A5
 //*****************************************************************************
 //ERROR values
-#define ERROR_OK									0
-#define ERROR_RTC_LSE_Failed			1
+#define ERROR_OK															0
+#define ERROR_RTC_LSE_Failed_LSEConfig				1
+#define ERROR_RTC_LSE_Failed_ENABLE						2
+#define ERROR_RTC_LSE_Failed_SetPrescaler			3
+#define ERROR_RTC_LSI_Failed_ENABLE						4
+#define ERROR_RTC_LSI_Failed_RTCCLKConfig			5
+#define ERROR_RTC_LSI_Failed_SetPrescaler			6
+#define ERROR_RTC_LSI_Failed_SetPrescaler1		7
+#define ERROR_RTC_Reset_Magic									8
 //*****************************************************************************
 // Проста структура для зручної роботи з датою та часом
 typedef struct {

@@ -31,21 +31,49 @@ int main(){
 	#ifdef DEBUG_CODE
 		my_usart_send_buffer("Start application\r\n");
 	#endif
-	//init delay lib
-	my_delay_TIM2_init();
 	//init rtc for sleep and date/time
-	if (my_RTC_Clock_Init() != ERROR_OK){
-		my_led_init_and_OFF();
-		led_on;
-		#ifdef DEBUG_CODE
-			my_usart_send_buffer("Start ERROR_RTC_LSE_Failed\r\n");
-		#endif
-	}
-	else{
+	uint8_t retcode = my_RTC_Clock_Init();
+	if (retcode == ERROR_OK){
 		#ifdef DEBUG_CODE
 			my_usart_send_buffer("Start ERROR_RTC_LSE_OK\r\n");
 		#endif
 	}
+	else{
+		my_led_init_and_OFF();
+		led_on;
+		#ifdef DEBUG_CODE
+			switch(retcode){
+				case ERROR_RTC_LSE_Failed_LSEConfig:
+					my_usart_send_buffer("Start ERROR_RTC_LSE_Failed_LSEConfig\r\n");
+					break;
+				case ERROR_RTC_LSE_Failed_ENABLE:
+					my_usart_send_buffer("Start ERROR_RTC_LSE_Failed_ENABLE\r\n");
+					break;
+				case ERROR_RTC_LSE_Failed_SetPrescaler:
+					my_usart_send_buffer("Start ERROR_RTC_LSE_Failed_SetPrescaler\r\n");
+					break;
+				case ERROR_RTC_LSI_Failed_ENABLE:
+					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_ENABLE\r\n");
+					break;
+				case ERROR_RTC_LSI_Failed_RTCCLKConfig:
+					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_RTCCLKConfig\r\n");
+					break;
+				case ERROR_RTC_LSI_Failed_SetPrescaler:
+					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_SetPrescaler\r\n");
+					break;
+				case ERROR_RTC_LSI_Failed_SetPrescaler1:
+					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_SetPrescaler1\r\n");
+					break;
+				case ERROR_RTC_Reset_Magic:
+					my_usart_send_buffer("Start ERROR_RTC_Reset_Magic\r\n");
+					break;
+				default:
+					break;
+		}
+		#endif
+	}
+	//init delay lib
+	my_delay_TIM2_init();
 	//read date
 	my_RTC_GetDateTime(&now);
 	//if date is wrong - set compilation date/time
@@ -75,15 +103,15 @@ int main(){
 
 		// 3. Деініціалізуємо датчики та переводимо всі порти в режим низького споживання
 		// Sensors_DeInit();
-		my_PrepareForStop();
+		//my_PrepareForStop();
 
 		// 4. Засинаємо точно до початку наступної години (XX:00:00)
-		my_RTC_EnterStopUntilNextHour();
+		//my_RTC_EnterStopUntilNextHour();
 
 		
 				
 				// 1. Ініціалізуємо потрібну для роботи периферію (GPIO, LED, датчики, UART/I2C)
-		my_led_init_and_OFF();
+		//my_led_init_and_OFF();
 		// Sensors_Init();
 
 	
