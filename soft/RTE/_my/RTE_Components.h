@@ -16,6 +16,8 @@
  */
 #define CMSIS_device_header "stm32f10x.h"
 
+/* Keil::Device:StdPeriph Drivers:ADC:3.6.0 */
+#define RTE_DEVICE_STDPERIPH_ADC
 /* Keil::Device:StdPeriph Drivers:BKP:3.6.0 */
 #define RTE_DEVICE_STDPERIPH_BKP
 /* Keil::Device:StdPeriph Drivers:EXTI:3.6.0 */

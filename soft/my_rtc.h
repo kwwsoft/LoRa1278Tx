@@ -21,5 +21,8 @@ void my_RTC_EnterStopSeconds(uint32_t seconds);
 // Встановлення дати та часу з моменту компіляції прошивки
 void my_RTC_SetCompileTime(void);
 
+//зупинка до початку поточного часу
+void my_RTC_EnterStopUntilNextHour(void);
+
 
 #endif

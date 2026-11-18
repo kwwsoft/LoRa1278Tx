@@ -164,18 +164,45 @@ void my_RTC_GetDateTime(RTC_DateTime_t *dt){
 void my_RTC_EnterStopSeconds(uint32_t seconds){
 	if (seconds == 0) return;
 
+	// 1. Гарантуємо доступ до регістрів RTC
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+	PWR_BackupAccessCmd(ENABLE);
+
+	// 2. Очищаємо старі прапорці будильника, щоб уникнути миттєвого пробудження
 	RTC_WaitForLastTask();
+	RTC_ClearITPendingBit(RTC_IT_ALR);
+	EXTI_ClearITPendingBit(EXTI_Line17);
+	RTC_WaitForLastTask();
+
+	// 3. Встановлюємо час пробудження (поточний час + 3600 секунд)
 	uint32_t current_cnt = RTC_GetCounter();
 	RTC_SetAlarm(current_cnt + seconds);
 	RTC_WaitForLastTask();
 
+	// 4. Зупиняємо SysTick, щоб він не розбудив МК через 1 мс
+	SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+
+	// 5. Входимо в режим глибокого сну STOP Mode
 	PWR_ClearFlag(PWR_FLAG_WU);
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 
-	// Відновлюємо тактування 72 МГц після виходу зі сну
+	// --- Тут МК спить рівно 1 годину ---
+
+	// 6. Після пробудження відновлюємо тактування 72 МГц та SysTick
 	SystemInit();
+	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 }
 
+//*****************************************************************************
+void my_RTC_EnterStopUntilNextHour(void){
+	// 1. Отримуємо поточний лічильник і вираховуємо залишок до рівної години
+	RTC_WaitForLastTask();
+	uint32_t current_cnt = RTC_GetCounter();
+	uint32_t seconds_to_hour = 3600UL - (current_cnt % 3600UL);
+
+	// 2. Засинаємо рівно на цю кількість секунд
+	my_RTC_EnterStopSeconds(seconds_to_hour);
+}
 //*****************************************************************************
 void my_RTC_SetCompileTime(void){
 	RTC_DateTime_t dt = {0};
