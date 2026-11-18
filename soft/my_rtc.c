@@ -7,15 +7,19 @@
 #include "misc.h"
 #include <stdlib.h>
 #include <string.h>
+#include "my_global.h"
 
-//*****************************************************************************
-#define RTC_BKP_MAGIC_VALUE 0xA5A5
+// Перевірка на високосний рік
+static uint8_t is_leap_year(uint16_t year){
+	return ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
+}
+
 //*****************************************************************************
 uint8_t my_RTC_Clock_Init(void){
 	EXTI_InitTypeDef EXTI_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	uint32_t timeout = 0x00400000;
-	uint8_t lse_failed = 0;
+	uint8_t lse_failed = ERROR_OK;
 
 	// 1. Вмикаємо тактування PWR та BKP і дозволяємо доступ до Backup-домену
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
@@ -29,7 +33,7 @@ uint8_t my_RTC_Clock_Init(void){
 		RCC_LSEConfig(RCC_LSE_ON);
 		while (RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET){
 			if (--timeout == 0){
-				lse_failed = 1;
+				lse_failed = ERROR_RTC_LSE_Failed;
 				break;
 			}
 		}
@@ -82,6 +86,7 @@ uint8_t my_RTC_Clock_Init(void){
 
 	return lse_failed;
 }
+
 //*****************************************************************************
 void RTCAlarm_IRQHandler(void){
 	if (RTC_GetITStatus(RTC_IT_ALR) != RESET){
@@ -90,35 +95,71 @@ void RTCAlarm_IRQHandler(void){
 		RTC_WaitForLastTask();
 	}
 }
+
 //*****************************************************************************
 void my_RTC_SetDateTime(const RTC_DateTime_t *dt){
-	struct tm t = {0};
-	t.tm_year = dt->year - 1900;
-	t.tm_mon  = dt->month - 1;
-	t.tm_mday = dt->day;
-	t.tm_hour = dt->hour;
-	t.tm_min  = dt->min;
-	t.tm_sec  = dt->sec;
+	const uint16_t days_before_month[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+	uint32_t days = 0;
 
-	time_t timestamp = mktime(&t);
+	if (dt->year < 1970 || dt->month < 1 || dt->month > 12 || dt->day < 1 || dt->day > 31){
+		return;
+	}
+
+	for (uint16_t y = 1970; y < dt->year; y++){
+		days += is_leap_year(y) ? 366 : 365;
+	}
+
+	days += days_before_month[dt->month - 1];
+	if (dt->month > 2 && is_leap_year(dt->year)){
+		days += 1;
+	}
+
+	days += (dt->day - 1);
+
+	uint32_t timestamp = days * 86400UL + dt->hour * 3600UL + dt->min * 60UL + dt->sec;
 
 	RTC_WaitForLastTask();
-	RTC_SetCounter((uint32_t)timestamp);
+	RTC_SetCounter(timestamp);
 	RTC_WaitForLastTask();
 }
+
 //*****************************************************************************
 void my_RTC_GetDateTime(RTC_DateTime_t *dt){
-	time_t timestamp = (time_t)RTC_GetCounter();
-	struct tm *t = gmtime(&timestamp);
+	const uint8_t days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	uint32_t timestamp = RTC_GetCounter();
 
-	dt->year  = t->tm_year + 1900;
-	dt->month = t->tm_mon + 1;
-	dt->day   = t->tm_mday;
-	dt->hour  = t->tm_hour;
-	dt->min   = t->tm_min;
-	dt->sec   = t->tm_sec;
-	dt->wday  = t->tm_wday;
+	uint32_t days = timestamp / 86400UL;
+	uint32_t rem  = timestamp % 86400UL;
+
+	dt->hour = rem / 3600UL;
+	rem %= 3600UL;
+	dt->min  = rem / 60UL;
+	dt->sec  = rem % 60UL;
+
+	// 1 січня 1970 року був четвергом (4)
+	dt->wday = (days + 4) % 7;
+
+	uint16_t year = 1970;
+	while (1){
+		uint16_t days_in_year = is_leap_year(year) ? 366 : 365;
+		if (days < days_in_year) break;
+		days -= days_in_year;
+		year++;
+	}
+	dt->year = year;
+
+	uint8_t month = 0;
+	while (1){
+		uint8_t dim = days_in_month[month];
+		if (month == 1 && is_leap_year(year)) dim = 29;
+		if (days < dim) break;
+		days -= dim;
+		month++;
+	}
+	dt->month = month + 1;
+	dt->day   = days + 1;
 }
+
 //*****************************************************************************
 void my_RTC_EnterStopSeconds(uint32_t seconds){
 	if (seconds == 0) return;
@@ -134,9 +175,10 @@ void my_RTC_EnterStopSeconds(uint32_t seconds){
 	// Відновлюємо тактування 72 МГц після виходу зі сну
 	SystemInit();
 }
+
 //*****************************************************************************
 void my_RTC_SetCompileTime(void){
-	RTC_DateTime_t dt;
+	RTC_DateTime_t dt = {0};
 	const char *date_str = __DATE__; // Формат: "Nov 17 2026"
 	const char *time_str = __TIME__; // Формат: "16:09:00"
 	const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",

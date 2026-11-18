@@ -3,17 +3,7 @@
 
 #include "stm32f10x.h"
 #include <time.h>
-
-// Проста структура для зручної роботи з датою та часом
-typedef struct {
-	uint16_t year;   // Наприклад, 2026
-	uint8_t  month;  // 1..12
-	uint8_t  day;    // 1..31
-	uint8_t  hour;   // 0..23
-	uint8_t  min;    // 0..59
-	uint8_t  sec;    // 0..59
-	uint8_t  wday;   // День тижня: 0 = Нд, 1 = Пн .. 6 = Сб
-} RTC_DateTime_t;
+#include "my_global.h"
 
 // Ініціалізація RTC на зовнішньому кварці 32.768 кГц (LSE)
 // Повертає 0 при успіху, 1 при помилці запуску кварцу (перехід на LSI)

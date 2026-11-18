@@ -1,7 +1,7 @@
 #include "my_tim2_delay.h"
-
+//*****************************************************************************
 volatile uint8_t f_timer_2_end = 0;
-
+//*****************************************************************************
 void my_delay_TIM2_init(void){
 	TIM_TimeBaseInitTypeDef TIMER_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -22,7 +22,7 @@ void my_delay_TIM2_init(void){
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 }
-
+//*****************************************************************************
 void TIM2_IRQHandler(void){
 	if (TIM2->SR & TIM_SR_UIF){
 		TIM2->SR &= ~TIM_SR_UIF;
@@ -31,7 +31,7 @@ void TIM2_IRQHandler(void){
 		TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
 	}
 }
-
+//*****************************************************************************
 void my_delay_us(uint16_t n_usec){
 	if (n_usec <= 4) return;
 	f_timer_2_end = 0;
@@ -46,9 +46,11 @@ void my_delay_us(uint16_t n_usec){
 
 	while(f_timer_2_end == 0);
 }
-
+//*****************************************************************************
 void my_delay_ms(uint32_t n_msec){
 	while (n_msec--){
 		my_delay_us(1000);
 	}
 }
+//*****************************************************************************
+

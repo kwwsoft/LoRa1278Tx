@@ -405,6 +405,11 @@
               <FileType>1</FileType>
               <FilePath>.\my_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>my_global.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\my_global.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
