@@ -53,3 +53,4 @@ STM32F103CBT6.BAT
 JLinkLog.txt
 soft/DebugConfig/
 soft/EventRecorderStub.scvd
+soft/LoRaTx.uvguix.userkwwsoft
