@@ -106,7 +106,7 @@ void i2c_init(void){
 	I2C_InitTypeDef i2c;
 	GPIO_InitTypeDef port;
 
-	i2c_bus_recover();
+	//i2c_bus_recover();
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
@@ -300,17 +300,17 @@ uint8_t BMP280_ReadData(int32_t *temperature, uint32_t *pressure_pa){
 	int32_t adc_P, adc_T;
 
 	// 1. Запускаємо одиночне вимірювання (Forced Mode = 0x01)
-	if (i2c_write_byte_bmp280(0xF4, BMP280_OSRS_CONFIG | 0x01) != 0) return 1;
+	if (i2c_write_byte_bmp280(0xF4, BMP280_OSRS_CONFIG | 0x01) != 0) return ERROR_BMP280_OSRS_CONFIG;
 
 	// 2. Чекаємо завершення вимірювання
 	do {
 		my_delay_ms(2);
-		if (i2c_read_byte_bmp280(0xF3, &status) != 0) return 2;
-		if (--timeout == 0) return 3;
+		if (i2c_read_byte_bmp280(0xF3, &status) != 0) return ERROR_BMP280_END_MEASUREMENT;
+		if (--timeout == 0) return ERROR_BMP280_MEASUREMENT_TIMEOUT;
 	} while (status & (1 << 3));
 
 	// 3. Читаємо 6 байтів даних (з правильними індексами!)
-	if (i2c_read_array_bmp280(0xF7, raw_data, 6) != 0) return 4;
+	if (i2c_read_array_bmp280(0xF7, raw_data, 6) != 0) return ERROR_BMP280_READ_DATA;
 
 	adc_P = (int32_t)((((uint32_t)raw_data[0]) << 12) | (((uint32_t)raw_data[1]) << 4) | ((uint32_t)raw_data[2] >> 4));
 	adc_T = (int32_t)((((uint32_t)raw_data[3]) << 12) | (((uint32_t)raw_data[4]) << 4) | ((uint32_t)raw_data[5] >> 4));
@@ -318,7 +318,7 @@ uint8_t BMP280_ReadData(int32_t *temperature, uint32_t *pressure_pa){
 	*temperature = BMP280_Compensate_T(adc_T);
 	*pressure_pa = BMP280_Compensate_P(adc_P);
 
-	return 0;
+	return ERROR_OK;
 }//********************************************************************************************
 // Розрахунок висоти над рівнем моря (у метрах)
 // pressure_pa  - поточний виміряний тиск (Па)
