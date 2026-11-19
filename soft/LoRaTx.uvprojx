@@ -420,6 +420,11 @@
               <FileType>1</FileType>
               <FilePath>.\my_debug.c</FilePath>
             </File>
+            <File>
+              <FileName>vdda.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\vdda.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

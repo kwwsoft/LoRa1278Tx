@@ -1,0 +1,70 @@
+#include "stm32f10x.h"
+#include "stm32f10x_adc.h"              // Keil::Device:StdPeriph Drivers:ADC
+
+#include <stdio.h> // Для sprintf
+#include "vdda.h"
+
+//*****************************************************************************
+// Типове значення Vrefint у мілівольтах (1.20 В = 1200 мВ)
+//#define VREFINT_MV  1200UL 
+//для цього чіпа виміряне
+#define VREFINT_MV  1215UL 
+
+//*****************************************************************************
+void my_ADC_Vref_Init(void) {
+    ADC_InitTypeDef ADC_InitStructure;
+
+    // 1. Тактування ADC1 (72 МГц / 6 = 12 МГц, макс. допустима для F1 — 14 МГц)
+    RCC_ADCCLKConfig(RCC_PCLK2_Div6);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+
+    // 2. Конфігурація АЦП
+    ADC_DeInit(ADC1);
+    ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
+    ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+    ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+    ADC_InitStructure.ADC_NbrOfChannel = 1;
+    ADC_Init(ADC1, &ADC_InitStructure);
+
+    // 3. Вмикаємо внутрішнє опорне джерело Vrefint
+    ADC_TempSensorVrefintCmd(ENABLE);
+
+    // 4. Вмикаємо АЦП та проводимо калібрування
+    ADC_Cmd(ADC1, ENABLE);
+
+    ADC_ResetCalibration(ADC1);
+    while (ADC_GetResetCalibrationStatus(ADC1));
+    
+    ADC_StartCalibration(ADC1);
+    while (ADC_GetCalibrationStatus(ADC1));
+}
+//*****************************************************************************
+// Повертає напругу живлення у мілівольтах (наприклад, 3290 мВ)
+uint16_t my_Get_Supply_Voltage_mV(void) {
+    uint32_t adc_sum = 0;
+    const uint8_t samples = 16;
+
+    // Налаштовуємо 17-й канал (Vrefint) з максимальним часом вибірки
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 1, ADC_SampleTime_239Cycles5);
+
+    for (uint8_t i = 0; i < samples; i++) {
+        ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+        while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
+        adc_sum += ADC_GetConversionValue(ADC1);
+    }
+
+    uint32_t adc_avg = adc_sum / samples;
+
+    if (adc_avg == 0) return 0;
+
+    // Цілочисельний розрахунок у мілівольтах
+    // Використовуємо 32-бітні числа (UL), щоб уникнути переповнення при множенні
+    uint16_t vdda_mv = (uint16_t)((VREFINT_MV * 4095UL) / adc_avg);
+    
+    return vdda_mv;
+}
+//*****************************************************************************
+
+

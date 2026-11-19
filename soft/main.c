@@ -9,6 +9,7 @@
 #include "my_usart.h"
 #include "my_rtc.h"
 #include "my_i2c_bmp280.h"
+#include "vdda.h"
 //*****************************************************************************
 uint8_t bmp280_ready;
 uint8_t retcode;
@@ -53,10 +54,11 @@ int main(){
 		//BMP280
 		bmp280_init_count = 5;
 		bmp280_ready = 0;
+		//zero out packet fields
 		myTXpacket = (LoRa_Packet_t){0};
 		//begin work
 		myTXpacket.timestamp = RTC_GetCounter();
-		//
+		//--- get temperature and pressure from the sensor BMP280 --- begin
 		do{
 				i2c_init();
 				//Sensor not initialized – initial setup required
@@ -88,6 +90,11 @@ int main(){
 				i2c_bus_recover();
 			}
 		}
+		//--- get temperature and pressure from the sensor BMP280 --- end
+		//--- measure the voltage of the power battery --- begin
+		my_ADC_Vref_Init();
+		myTXpacket.vbat_mv = my_Get_Supply_Voltage_mV();
+		//--- measure the voltage of the power battery --- end
 	
 		
 		
