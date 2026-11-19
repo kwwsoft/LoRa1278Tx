@@ -1,6 +1,10 @@
 #ifndef MY_GLOBAL_H
 #define MY_GLOBAL_H
 
+//define global debug mode
+#define DEBUG_CODE
+
+
 #include "stm32f10x.h"
 
 //*****************************************************************************
@@ -12,6 +16,8 @@
 //*****************************************************************************
 //ERROR values
 #define ERROR_OK															0
+//*****************************************************************************
+//ERROR values RTC
 #define ERROR_RTC_LSE_Failed_LSEConfig				1
 #define ERROR_RTC_LSE_Failed_ENABLE						2
 #define ERROR_RTC_LSE_Failed_SetPrescaler			3
@@ -20,6 +26,14 @@
 #define ERROR_RTC_LSI_Failed_SetPrescaler			6
 #define ERROR_RTC_LSI_Failed_SetPrescaler1		7
 #define ERROR_RTC_Reset_Magic									8
+//*****************************************************************************
+//ERROR values BMP280
+#define ERROR_BMP280_ID_READ									1
+#define ERROR_BMP280_ID_DATA									2
+#define ERROR_BMP280_RESET										3
+#define ERROR_BMP280_READ_CALIBR							4
+#define ERROR_BMP280_IIR_OFF									5
+#define ERROR_BMP280_SLEEP										6
 //*****************************************************************************
 // Проста структура для зручної роботи з датою та часом
 typedef struct {

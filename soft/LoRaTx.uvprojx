@@ -415,6 +415,11 @@
               <FileType>1</FileType>
               <FilePath>.\my_i2c_bmp280.c</FilePath>
             </File>
+            <File>
+              <FileName>my_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\my_debug.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

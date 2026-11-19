@@ -1,19 +1,25 @@
-#define DEBUG_CODE
 //*****************************************************************************
 #include "stm32f10x.h"                  // Device header
 #include "misc.h"                       // Keil::Device:StdPeriph Drivers:Framework
-#include <string.h>
-#include <stdio.h>
+//#include <string.h>
+//#include <stdio.h>
 #include "my_global.h"
+#include "my_debug.h"
 #include "my_tim2_delay.h"
 #include "my_usart.h"
 #include "my_rtc.h"
+#include "my_i2c_bmp280.h"
 //*****************************************************************************
-
-
-RTC_DateTime_t now;
+uint8_t bmp280_ready = 0;
+uint8_t retcode;
+//*****************************************************************************
+/*
+	All functions starting with `myDebug...` only work when #define DEBUG_CODE` is set; 
+	otherwise, the compiler removes them from the release build.
+*/
 //*****************************************************************************
 int main(){
+	RTC_DateTime_t now;
 	//remap PA15 and PB3 from JTAG to normal pins
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
@@ -21,57 +27,14 @@ int main(){
 	my_led_init_and_OFF();
 	my_led_deinit();
 	// Дозволити відлагодження (ST-Link) у режимах SLEEP, STOP та STANDBY
-	#ifdef DEBUG_CODE
+//	#ifdef DEBUG_CODE
 		DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
-	#endif
+//	#endif
 	//init usart module
-	#ifdef DEBUG_CODE
-		my_usart_init();
-	#endif
-	#ifdef DEBUG_CODE
-		my_usart_send_buffer("Start application\r\n");
-	#endif
+	myDebugInitUart();
 	//init rtc for sleep and date/time
-	uint8_t retcode = my_RTC_Clock_Init();
-	if (retcode == ERROR_OK){
-		#ifdef DEBUG_CODE
-			my_usart_send_buffer("Start ERROR_RTC_LSE_OK\r\n");
-		#endif
-	}
-	else{
-		my_led_init_and_OFF();
-		led_on;
-		#ifdef DEBUG_CODE
-			switch(retcode){
-				case ERROR_RTC_LSE_Failed_LSEConfig:
-					my_usart_send_buffer("Start ERROR_RTC_LSE_Failed_LSEConfig\r\n");
-					break;
-				case ERROR_RTC_LSE_Failed_ENABLE:
-					my_usart_send_buffer("Start ERROR_RTC_LSE_Failed_ENABLE\r\n");
-					break;
-				case ERROR_RTC_LSE_Failed_SetPrescaler:
-					my_usart_send_buffer("Start ERROR_RTC_LSE_Failed_SetPrescaler\r\n");
-					break;
-				case ERROR_RTC_LSI_Failed_ENABLE:
-					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_ENABLE\r\n");
-					break;
-				case ERROR_RTC_LSI_Failed_RTCCLKConfig:
-					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_RTCCLKConfig\r\n");
-					break;
-				case ERROR_RTC_LSI_Failed_SetPrescaler:
-					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_SetPrescaler\r\n");
-					break;
-				case ERROR_RTC_LSI_Failed_SetPrescaler1:
-					my_usart_send_buffer("Start ERROR_RTC_LSI_Failed_SetPrescaler1\r\n");
-					break;
-				case ERROR_RTC_Reset_Magic:
-					my_usart_send_buffer("Start ERROR_RTC_Reset_Magic\r\n");
-					break;
-				default:
-					break;
-		}
-		#endif
-	}
+	retcode = my_RTC_Clock_Init();
+	myDebugRTCFailed(retcode);
 	//init delay lib
 	my_delay_TIM2_init();
 	//read date
@@ -79,25 +42,28 @@ int main(){
 	//if date is wrong - set compilation date/time
 	//if (now.year < 2026){
 	my_RTC_SetCompileTime();
-	//}
-	#ifdef DEBUG_CODE
-		char buffer[80] = {'\0'};
-		my_RTC_GetDateTime(&now);
-		sprintf(buffer, "%02d.%02d.%04d  %02d:%02d:%02d\r\n",
-		now.day, now.month, now.year, now.hour, now.min, now.sec);
-		my_usart_send_buffer(buffer);
-	#endif
+	myDebugShowRTCDateTime();
 
 	
-
+	//i2c_init();
 
 	
 	
 
 	
 	while(1){
+		//Sensor not initialized – initial setup required
+		if (!bmp280_ready){
+			//retcode = BMP280_Init();
+		}
+	
 		
-
+		
+		
+		
+		
+		
+		
 		// 2. Виконуємо корисну роботу
 		// ...
 
@@ -107,7 +73,8 @@ int main(){
 
 		// 4. Засинаємо точно до початку наступної години (XX:00:00)
 		//my_RTC_EnterStopUntilNextHour();
-
+	
+		my_delay_ms(2000);
 		
 				
 				// 1. Ініціалізуємо потрібну для роботи периферію (GPIO, LED, датчики, UART/I2C)

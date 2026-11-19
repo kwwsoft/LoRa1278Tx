@@ -1,6 +1,7 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_i2c.h"
+#include "my_global.h"
 #include "my_i2c_bmp280.h"
 //#include <math.h>
 
@@ -227,15 +228,15 @@ uint8_t BMP280_Init(void){
 	uint8_t raw_calib[24];
 
 	// 1. Перевірка ID чипа
-	if (i2c_read_byte_bmp280(0xD0, &chip_id) != 0) return 1;
-	if (chip_id != 0x58 && chip_id != 0x60) return 2;
+	if (i2c_read_byte_bmp280(0xD0, &chip_id) != 0) return ERROR_BMP280_ID_READ;
+	if (chip_id != 0x58 && chip_id != 0x60) return ERROR_BMP280_ID_DATA;
 
 	// 2. Програмне скидання датчика
-	if (i2c_write_byte_bmp280(0xE0, 0xB6) != 0) return 3;
+	if (i2c_write_byte_bmp280(0xE0, 0xB6) != 0) return ERROR_BMP280_RESET;
 	my_delay_ms(10);
 
 	// 3. Зчитування 24 байтів калібрування (з правильними індексами!)
-	if (i2c_read_array_bmp280(0x88, raw_calib, 24) != 0) return 4;
+	if (i2c_read_array_bmp280(0x88, raw_calib, 24) != 0) return ERROR_BMP280_READ_CALIBR;
 
 	calib.dig_T1 = (uint16_t)((raw_calib[1] << 8) | raw_calib[0]);
 	calib.dig_T2 = (int16_t)((raw_calib[3] << 8) | raw_calib[2]);
@@ -252,12 +253,12 @@ uint8_t BMP280_Init(void){
 	calib.dig_P9 = (int16_t)((raw_calib[23] << 8) | raw_calib[22]);
 
 	// 4. Вимикаємо IIR-фільтр для Forced Mode
-	if (i2c_write_byte_bmp280(0xF5, 0x00) != 0) return 5;
+	if (i2c_write_byte_bmp280(0xF5, 0x00) != 0) return ERROR_BMP280_IIR_OFF;
 
 	// 5. Налаштовуємо передискретизацію та переводимо у Sleep Mode (0x00)
-	if (i2c_write_byte_bmp280(0xF4, BMP280_OSRS_CONFIG | 0x00) != 0) return 6;
+	if (i2c_write_byte_bmp280(0xF4, BMP280_OSRS_CONFIG | 0x00) != 0) return ERROR_BMP280_SLEEP;
 
-	return 0;
+	return ERROR_OK;
 }
 //*****************************************************************************
 // Формула компенсації температури з даташиту Bosch (повертає °C * 100)
