@@ -10,6 +10,7 @@
 #include "my_rtc.h"
 #include "my_i2c_bmp280.h"
 #include "vdda.h"
+#include "my_lora_sx1278.h"
 //*****************************************************************************
 uint8_t bmp280_ready;
 uint8_t retcode;
@@ -47,6 +48,12 @@ int main(){
 	//if (now.year < 2026){
 	my_RTC_SetCompileTime();
 	myDebugShowRTCDateTime();
+	//LoRa SX1278
+	LoRa_WakeUp();
+  retcode = LoRa_Init(433000000UL); // ¬каж≥ть вашу частоту (433E6 або 868E6)
+  myDebugLoRaStatus(retcode);
+  LoRa_Sleep();
+
 
 	
 	while(1){
@@ -91,6 +98,7 @@ int main(){
 			}
 		}
 		//--- get temperature and pressure from the sensor BMP280 --- end
+		//
 		//--- measure the voltage of the power battery --- begin
 		my_ADC_Vref_Init();
 		myTXpacket.vbat_mv = my_Get_Supply_Voltage_mV();
@@ -111,6 +119,11 @@ int main(){
 
 
 
+		// ѕередача пакету по LoRa
+		LoRa_WakeUp();
+		retcode = LoRa_SendPacket((uint8_t*)&myTXpacket, sizeof(LoRa_Packet_t));
+		myDebugLoRaStatus(retcode);
+		LoRa_Sleep();
 		
 		
 		

@@ -13,6 +13,7 @@
 #include "my_debug.h"
 #include "my_usart.h"
 #include "my_rtc.h"
+//#include "my_lora_sx1278.h"
 //*****************************************************************************
 #define led_on 	(GPIOC->BRR = GPIO_Pin_13)  //Bit_RESET mapping
 #define led_off (GPIOC->BSRR = GPIO_Pin_13) //bit_set mapping
@@ -211,6 +212,24 @@ void myDebugShowRawPacket(const void *data, uint16_t len){
 
     snprintf(buf + offset, sizeof(buf) - offset, "\r\n");
     my_usart_send_buffer(buf);
+}
+//*****************************************************************************
+void myDebugLoRaStatus(uint8_t retcode) {
+    switch (retcode) {
+        case ERROR_LORA_OK:
+            my_usart_send_buffer("LoRa TX OK\r\n");
+            break;
+        case ERROR_LORA_WRONG_VERSION:
+            my_usart_send_buffer("ERROR_LORA_WRONG_VERSION\r\n");
+            led_on;
+            break;
+        case ERROR_LORA_TX_TIMEOUT:
+            my_usart_send_buffer("ERROR_LORA_TX_TIMEOUT\r\n");
+            led_on;
+            break;
+        default:
+            break;
+    }
 }
 //*****************************************************************************
 

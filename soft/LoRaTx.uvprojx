@@ -425,6 +425,11 @@
               <FileType>1</FileType>
               <FilePath>.\vdda.c</FilePath>
             </File>
+            <File>
+              <FileName>my_lora_sx1278.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\my_lora_sx1278.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

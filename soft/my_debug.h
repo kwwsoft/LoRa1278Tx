@@ -15,6 +15,7 @@
 	void myDebugInitLedPC13AndOFF();
 	void myDebugShowLoRaPacket(const LoRa_Packet_t *pkt);
 	void myDebugShowRawPacket(const void *data, uint16_t len);
+	void myDebugLoRaStatus(uint8_t retcode);
 #else	
 	#define myDebugInitUart()     									((void)0)
 	#define myDebugSendBuffer(pb)										((void)0)
@@ -24,6 +25,7 @@
 	#define myDebugInitLedPC13AndOFF()							((void)0)
 	#define myDebugShowLoRaPacket(pkt)							((void)0)
 	#define myDebugShowRawPacket(data, len)					((void)0)
+	#define myDebugLoRaStatus(retcode)      				((void)0)
 #endif
 //*****************************************************************************
 
