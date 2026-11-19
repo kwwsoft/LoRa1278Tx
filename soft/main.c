@@ -24,8 +24,7 @@ int main(){
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
 	//
-	my_led_init_and_OFF();
-	my_led_deinit();
+	myDebugInitLedPC13AndOFF();
 	// Дозволити відлагодження (ST-Link) у режимах SLEEP, STOP та STANDBY
 //	#ifdef DEBUG_CODE
 		DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
@@ -45,7 +44,7 @@ int main(){
 	myDebugShowRTCDateTime();
 
 	
-	//i2c_init();
+	i2c_init();
 
 	
 	
@@ -64,24 +63,19 @@ int main(){
 		
 		
 		
-		// 2. Виконуємо корисну роботу
-		// ...
 
-		// 3. Деініціалізуємо датчики та переводимо всі порти в режим низького споживання
-		// Sensors_DeInit();
-		//my_PrepareForStop();
-
+		//Деініціалізуємо датчики та переводимо всі порти в режим низького споживання
+		my_PrepareForStop();
 		// 4. Засинаємо точно до початку наступної години (XX:00:00)
 		//my_RTC_EnterStopUntilNextHour();
-	
-		my_delay_ms(2000);
-		
-				
-				// 1. Ініціалізуємо потрібну для роботи периферію (GPIO, LED, датчики, UART/I2C)
-		//my_led_init_and_OFF();
-		// Sensors_Init();
-
-	
+		my_RTC_EnterStopSeconds(10);
+		//minimum baseline immediately upon waking
+		myDebugInitUart();
+		//remap PA15 and PB3 from JTAG to normal pins
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+		AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+		//allow debugging during sleep and stop
+		DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
 	};
 	
 

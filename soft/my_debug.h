@@ -11,11 +11,13 @@
 	void myDebugSendBuffer(char *pb);
 	void myDebugRTCFailed(uint8_t retcode);
 	void myDebugShowRTCDateTime();
+	void myDebugInitLedPC13AndOFF();
 #else	
 	#define myDebugInitUart()     									((void)0)
 	#define myDebugSendBuffer(pb);									((void)0)
 	#define myDebugRTCFailed(retcode);							((void)0)
 	#define myDebugShowRTCDateTime();								((void)0)
+	#define myDebugInitLedPC13AndOFF();							((void)0)
 #endif
 //*****************************************************************************
 

@@ -7,9 +7,6 @@
 
 #include "stm32f10x.h"
 
-//*****************************************************************************
-#define led_on 	(GPIOC->BRR = GPIO_Pin_13)  //Bit_RESET mapping
-#define led_off (GPIOC->BSRR = GPIO_Pin_13) //bit_set mapping
 //********************************************************************************************
 //a sign that the watch is already running
 #define RTC_BKP_MAGIC_VALUE 0xA5A5

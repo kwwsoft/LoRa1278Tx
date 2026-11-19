@@ -106,10 +106,11 @@ void i2c_init(void){
 	I2C_InitTypeDef i2c;
 	GPIO_InitTypeDef port;
 
+	i2c_bus_recover();
+
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
 	
-	i2c_bus_recover();
 
 	port.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
 	port.GPIO_Mode = GPIO_Mode_AF_OD;
