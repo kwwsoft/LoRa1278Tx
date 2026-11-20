@@ -184,8 +184,8 @@ uint8_t LoRa_Init(uint32_t freq_hz) {
 	// Sync Word (0x12 Ч приватна мережа, 0x34 Ч LoRaWAN)
 	LoRa_WriteReg(REG_SYNC_WORD, 0x12);
 
-	// ћап≥нг DIO0 на TxDone (00 у б≥тах 7:6)
-	LoRa_WriteReg(REG_DIO_MAPPING_1, 0x00);
+	// // 01 у б≥тах 7:6 -> TxDone на DIO0
+	LoRa_WriteReg(REG_DIO_MAPPING_1, 0x40);
 
 	// ќчищаЇмо вс≥ прапорц≥ переривань (п≥сл€ цього DIO0 гарантовано впаде в 0)
 	LoRa_WriteReg(REG_IRQ_FLAGS, 0xFF);
