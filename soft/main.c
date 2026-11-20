@@ -32,9 +32,8 @@ int main(){
 	//
 	myDebugInitLedPC13AndOFF();
 	// Дозволити відлагодження (ST-Link) у режимах SLEEP, STOP та STANDBY
-//	#ifdef DEBUG_CODE
-		DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
-//	#endif
+	// перевіряємо джампер BOOT1 (PB2) і налаштовуємо DBGMCU
+	myDebugUpdateMode();
 	//init delay lib
 	my_delay_TIM2_init();
 	//init usart module
@@ -136,13 +135,14 @@ int main(){
 		//my_RTC_EnterStopUntilNextHour();
 		my_RTC_EnterStopSeconds(6);
 		//minimum baseline immediately upon waking
+		// перевіряємо джампер BOOT1 (PB2) і налаштовуємо DBGMCU
+		myDebugUpdateMode();
 		myDebugInitUart();
 		myDebugSendBuffer("WakeUp after Sleep\r\n");
 		//remap PA15 and PB3 from JTAG to normal pins
 		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 		AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
 		//allow debugging during sleep and stop
-		DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
 		//peripheral initialization after wake-up
 		my_delay_TIM2_init();
 		//

@@ -20,16 +20,50 @@
 //*****************************************************************************
 #ifdef DEBUG_CODE
 //*****************************************************************************
+static uint8_t debug_active = 0;
+//*****************************************************************************
+// Перевірка джампера BOOT1 (PB2) та налаштування DBGMCU
+//*****************************************************************************
+void myDebugUpdateMode(void) {
+	GPIO_InitTypeDef port;
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+	// Налаштовуємо PB2 як вхід (на платі Blue Pill вже є резистор 100 кОм до джампера BOOT1)
+	port.GPIO_Pin = GPIO_Pin_2;
+	port.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	port.GPIO_Speed = GPIO_Speed_2MHz;
+	GPIO_Init(GPIOB, &port);
+
+	// Коротка пауза для стабілізації рівня
+	for (volatile uint16_t i = 0; i < 100; i++);
+
+	if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_2) == Bit_SET) {
+		debug_active = 1;
+		DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
+	} else {
+		debug_active = 0;
+		DBGMCU->CR &= ~(DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
+	}
+
+	// Переводимо PB2 назад у Analog Input, щоб не було витоку струму у сні
+	port.GPIO_Mode = GPIO_Mode_AIN;
+	GPIO_Init(GPIOB, &port);
+}
+//*****************************************************************************
 void	myDebugInitUart(){
+	if (!debug_active) return;
 	my_usart_init();
 	my_usart_send_buffer("Start application\r\n");
 }
 //*****************************************************************************
 void myDebugSendBuffer(char *pb){
+	if (!debug_active) return;
 	my_usart_send_buffer(pb);
 }
 //*****************************************************************************
 void myDebugRTCFailed(uint8_t retcode){
+	if (!debug_active) return;
 			switch(retcode){
 				case ERROR_OK:
 					my_usart_send_buffer("Start ERROR_RTC_LSE_OK\r\n");
@@ -72,6 +106,7 @@ void myDebugRTCFailed(uint8_t retcode){
 }
 //*****************************************************************************
 void myDebugBMP280Failed(uint8_t retcode){
+	if (!debug_active) return;
 			switch(retcode){
 				case ERROR_OK:
 					my_usart_send_buffer("Start BMP280 OK\r\n");
@@ -122,6 +157,7 @@ void myDebugBMP280Failed(uint8_t retcode){
 }
 //*****************************************************************************
 void myDebugShowRTCDateTime(){
+	if (!debug_active) return;
 RTC_DateTime_t now;
 		char buffer[80] = {'\0'};
 		my_RTC_GetDateTime(&now);
@@ -131,6 +167,7 @@ RTC_DateTime_t now;
 }
 //*****************************************************************************
 void myDebugInitLedPC13AndOFF(){
+	if (!debug_active) return;
 	GPIO_InitTypeDef port;
 	//pc13
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
@@ -142,6 +179,7 @@ void myDebugInitLedPC13AndOFF(){
 }
 //*****************************************************************************
 void myDebugShowLoRaPacket(const LoRa_Packet_t *pkt){
+	if (!debug_active) return;
     if (pkt == NULL) {
         my_usart_send_buffer("[DBG] NULL packet!\r\n");
         return;
@@ -184,6 +222,7 @@ void myDebugShowLoRaPacket(const LoRa_Packet_t *pkt){
 //*****************************************************************************
 //*****************************************************************************
 void myDebugShowRawPacket(const void *data, uint16_t len){
+	if (!debug_active) return;
     if (data == NULL || len == 0) {
         my_usart_send_buffer("[DBG] RAW: empty\r\n");
         return;
@@ -215,6 +254,7 @@ void myDebugShowRawPacket(const void *data, uint16_t len){
 }
 //*****************************************************************************
 void myDebugLoRaStatus(uint8_t retcode) {
+	if (!debug_active) return;
     switch (retcode) {
         case ERROR_LORA_OK:
             my_usart_send_buffer("LoRa TX OK\r\n");

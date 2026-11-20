@@ -7,6 +7,7 @@
 #include "my_usart.h"
 //*****************************************************************************
 #ifdef DEBUG_CODE
+	void myDebugUpdateMode(void);
 	void myDebugInitUart();
 	void myDebugSendBuffer(char *pb);
 	void myDebugRTCFailed(uint8_t retcode);
@@ -17,6 +18,7 @@
 	void myDebugShowRawPacket(const void *data, uint16_t len);
 	void myDebugLoRaStatus(uint8_t retcode);
 #else	
+	#define myDebugUpdateMode()                     ((void)0)
 	#define myDebugInitUart()     									((void)0)
 	#define myDebugSendBuffer(pb)										((void)0)
 	#define myDebugRTCFailed(retcode)								((void)0)
