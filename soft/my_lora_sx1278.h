@@ -25,7 +25,7 @@
 
 // Якщо DIO0 не підключений до МК, закоментуйте рядок нижче — 
 // код автоматично чекатиме завершення передачі через регістр IRQ по SPI.
-#define LORA_USE_DIO0_PIN
+//#define LORA_USE_DIO0_PIN
 #ifdef LORA_USE_DIO0_PIN
 	#define LORA_DIO0_PORT        GPIOA
 	#define LORA_DIO0_PORT_CLK    RCC_APB2Periph_GPIOA
