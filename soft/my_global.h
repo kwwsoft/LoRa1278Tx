@@ -2,7 +2,7 @@
 #define MY_GLOBAL_H
 
 //define global debug mode
-#define DEBUG_CODE
+//#define DEBUG_CODE
 
 
 #include "stm32f10x.h"
