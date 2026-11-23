@@ -14,7 +14,7 @@ void my_delay_TIM2_init(void){
 	TIMER_InitStructure.TIM_Period = 1;
 	TIM_TimeBaseInit(TIM2, &TIMER_InitStructure);
 
-	TIM2->CR1 |= TIM_CR1_URS; // Переривання тільки при переповненні, без реакції на UG
+	TIM2->CR1 |= TIM_CR1_URS; // Interrupt only on overflow, ignoring UG
 
 	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
@@ -53,4 +53,3 @@ void my_delay_ms(uint32_t n_msec){
 	}
 }
 //*****************************************************************************
-

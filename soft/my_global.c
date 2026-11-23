@@ -19,40 +19,40 @@ void my_led_deinit(){
 //********************************************************************************************
 void my_PrepareForStop(void){
 /*
-	функція перед входом у STOP Mode. 
-	Після пробудження потрібно буде заново викликати 
-	ініціалізацію датчиків та інтерфейсів (UART, SPI, I2C, GPIO).
+	Function executed before entering STOP Mode.
+	After wakeup, sensors and interfaces (UART, SPI, I2C, GPIO) 
+	must be reinitialized.
 */	
 	GPIO_InitTypeDef GPIO_InitStructure;
 
-	// 1. Вимикаємо АЦП, якщо використовувався (інакше він жере ~150 мкА у сні)
+	// 1. Disable ADC if used (otherwise it consumes ~150 uA during sleep)
 	ADC_TempSensorVrefintCmd(DISABLE);
 	ADC_Cmd(ADC1, DISABLE);
 	ADC_Cmd(ADC2, DISABLE);
 
-	// 2. Вмикаємо тактування всіх портів, щоб змінити конфігурацію пінів
+	// 2. Enable clocks for all ports to reconfigure the pins
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | 
 	                       RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | 
 	                       RCC_APB2Periph_AFIO, ENABLE);
 
-	// 3. Переводимо всі вільні піни в режим Analog Input (AIN)
-	// УВАГА: Якщо якісь піни мають зовнішню підтяжку (I2C, кнопки), налаштуйте їх окремо нижче!
+	// 3. Switch all unused pins to Analog Input (AIN) mode
+	// WARNING: If any pins have external pull-ups (I2C, buttons), configure them separately below!
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
 
-	// Порт A: залишаємо PA13 (SWDIO) та PA14 (SWCLK), щоб не втратити можливість прошивки без кнопки Reset
-	// Залишаємо PA13, PA14 для SWD, а PA2 (NSS LoRa) не переводимо в AIN
+	// Port A: leave PA13 (SWDIO) and PA14 (SWCLK) untouched to keep flashing capability without the Reset button
+	// Keep PA13, PA14 for SWD, and do not switch PA2 (LoRa NSS) to AIN
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All & ~(GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_2);
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	// Підтягуємо NSS (PA2) до 3.3В, щоб вхід SPI на SX1278 не "бовтався" в повітрі
+	// Pull up NSS (PA2) to 3.3V so the SPI input on SX1278 doesn't float
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	// Порти B, C, D: переводимо повністю в AIN (включаючи PC13 світлодіод)
-	// УВАГА: PC14 та PC15 — це кварц 32.768 кГц (LSE), але в режимі LSE вони керуються апаратно,
-	// проте безпечніше їх не чіпати при записі конфігурації GPIOC:
+	// Ports B, C, D: switch completely to AIN (including PC13 LED)
+	// WARNING: PC14 and PC15 are the 32.768 kHz crystal (LSE); although hardware-controlled in LSE mode,
+	// it is safer not to touch them when writing the GPIOC configuration:
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	GPIO_Init(GPIOD, &GPIO_InitStructure);
@@ -60,14 +60,14 @@ void my_PrepareForStop(void){
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All & ~(GPIO_Pin_14 | GPIO_Pin_15);
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-	// 4. Приклад для пінів із зовнішньою підтяжкою (якщо є I2C на PB6/PB7):
-	// Оскільки на I2C стоять резистори до 3.3В, переводимо їх у Floating Input, щоб не було витоку струму
+	// 4. Example for pins with external pull-ups (e.g., I2C on PB6/PB7):
+	// Since I2C has pull-up resistors to 3.3V, switch them to Floating Input to prevent current leakage
 		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	
 
-	// 5. Вимикаємо тактування всіх портів і периферії APB2/APB1 (крім PWR та BKP)
+	// 5. Disable clocks for all ports and APB2/APB1 peripherals (except PWR and BKP)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | 
 	                       RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | 
 	                       RCC_APB2Periph_AFIO | RCC_APB2Periph_ADC1 | 
@@ -89,4 +89,3 @@ uint16_t my_Calc_CRC16(const uint8_t *data, uint16_t length){
 	return crc;
 }
 //********************************************************************************************
-

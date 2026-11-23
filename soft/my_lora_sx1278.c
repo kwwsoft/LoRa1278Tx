@@ -8,7 +8,7 @@
 #include "my_debug.h"
 
 //*****************************************************************************
-// Регістри SX1278 (LoRa Mode)
+// SX1278 Registers (LoRa Mode)
 //*****************************************************************************
 #define REG_FIFO                    0x00
 #define REG_OP_MODE                 0x01
@@ -32,20 +32,20 @@
 #define REG_VERSION                 0x42
 #define REG_PA_DAC                  0x4D
 
-// Режими роботи (REG_OP_MODE)
+// Operating modes (REG_OP_MODE)
 #define MODE_LONG_RANGE_MODE        0x80
 #define MODE_SLEEP                  0x00
 #define MODE_STDBY                  0x01
 #define MODE_TX                     0x03
 
-// Прапорці переривань (REG_IRQ_FLAGS)
+// Interrupt flags (REG_IRQ_FLAGS)
 #define IRQ_TX_DONE_MASK            0x08
 
-// Таймаут передачі (у мілісекундах)
+// Transmission timeout (in milliseconds)
 #define LORA_TX_TIMEOUT_MS          3000
 
 //*****************************************************************************
-// Допоміжні макроси керування NSS
+// Helper macros for NSS control
 //*****************************************************************************
 #define LORA_NSS_LOW()              GPIO_ResetBits(LORA_CTRL_PORT, LORA_PIN_NSS)
 #define LORA_NSS_HIGH()             GPIO_SetBits(LORA_CTRL_PORT, LORA_PIN_NSS)
@@ -62,7 +62,7 @@ static uint8_t LoRa_SPI_Transfer(uint8_t data) {
 static uint8_t LoRa_ReadReg(uint8_t addr) {
 	uint8_t val;
 	LORA_NSS_LOW();
-	LoRa_SPI_Transfer(addr & 0x7F); // Біт 7 = 0 для читання
+	LoRa_SPI_Transfer(addr & 0x7F); // Bit 7 = 0 for read
 	val = LoRa_SPI_Transfer(0x00);
 	LORA_NSS_HIGH();
 	return val;
@@ -70,21 +70,21 @@ static uint8_t LoRa_ReadReg(uint8_t addr) {
 //*****************************************************************************
 static void LoRa_WriteReg(uint8_t addr, uint8_t val) {
 	LORA_NSS_LOW();
-	LoRa_SPI_Transfer(addr | 0x80); // Біт 7 = 1 для запису
+	LoRa_SPI_Transfer(addr | 0x80); // Bit 7 = 1 for write
 	LoRa_SPI_Transfer(val);
 	LORA_NSS_HIGH();
 }
 //*****************************************************************************
-// 1. Пробудження периферії МК (GPIO + SPI1) та вивід SX1278 зі сну
+// 1. Wake up MCU peripherals (GPIO + SPI1) and exit SX1278 from sleep
 //*****************************************************************************
 void LoRa_WakeUp(void) {
 	GPIO_InitTypeDef gpio;
 	SPI_InitTypeDef spi;
 
-	// Вмикаємо тактування портів, AFIO та SPI1
+	// Enable clocks for ports, AFIO, and SPI1
 	RCC_APB2PeriphClockCmd(LORA_SPI_PORT_CLK | LORA_CTRL_PORT_CLK | LORA_SPI_CLK | RCC_APB2Periph_AFIO, ENABLE);
 
-	// SCK (PA5) та MOSI (PA7) -> Alternate Function Push-Pull
+	// SCK (PA5) and MOSI (PA7) -> Alternate Function Push-Pull
 	gpio.GPIO_Pin = LORA_PIN_SCK | LORA_PIN_MOSI;
 	gpio.GPIO_Mode = GPIO_Mode_AF_PP;
 	gpio.GPIO_Speed = GPIO_Speed_50MHz;
@@ -95,13 +95,13 @@ void LoRa_WakeUp(void) {
 	gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(LORA_SPI_PORT, &gpio);
 
-	// NSS (PA4) та RST (PA3) -> Output Push-Pull
+	// NSS (PA4) and RST (PA3) -> Output Push-Pull
 	gpio.GPIO_Pin = LORA_PIN_NSS | LORA_PIN_RST;
 	gpio.GPIO_Mode = GPIO_Mode_Out_PP;
 	gpio.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(LORA_CTRL_PORT, &gpio);
 
-	// Переводимо NSS та RST у високий рівень (неактивний стан)
+	// Set NSS and RST high (inactive state)
 	LORA_NSS_HIGH();
 	GPIO_SetBits(LORA_CTRL_PORT, LORA_PIN_RST);
 
@@ -111,16 +111,16 @@ void LoRa_WakeUp(void) {
 	gpio.GPIO_Mode = GPIO_Mode_IPD; // Input Pull-Down
 	GPIO_Init(LORA_DIO0_PORT, &gpio);
 
-	// Налаштовуємо EXTI як апаратну заскочку по передньому фронту (без виклику IRQ в NVIC)
+	// Configure EXTI as a hardware rising-edge latch (without triggering NVIC IRQ)
 	GPIO_EXTILineConfig(LORA_DIO0_PORT_SOURCE, LORA_DIO0_PIN_SOURCE);
-	EXTI->IMR  &= ~LORA_DIO0_EXTI_LINE; // Не генерувати запит переривання в процесор
-	EXTI->EMR  &= ~LORA_DIO0_EXTI_LINE; // Не генерувати подію
-	EXTI->RTSR |= LORA_DIO0_EXTI_LINE;  // Ловити передній фронт (0 -> 1)
-	EXTI->FTSR &= ~LORA_DIO0_EXTI_LINE; // Не ловити задній фронт
-	EXTI->PR    = LORA_DIO0_EXTI_LINE;  // Очищаємо прапорець заскочки
+	EXTI->IMR  &= ~LORA_DIO0_EXTI_LINE; // Do not generate an interrupt request to the CPU
+	EXTI->EMR  &= ~LORA_DIO0_EXTI_LINE; // Do not generate an event
+	EXTI->RTSR |= LORA_DIO0_EXTI_LINE;  // Catch rising edge (0 -> 1)
+	EXTI->FTSR &= ~LORA_DIO0_EXTI_LINE; // Do not catch falling edge
+	EXTI->PR    = LORA_DIO0_EXTI_LINE;  // Clear the latch flag
 #endif
 
-	// Налаштування SPI1 (72 МГц / 16 = 4.5 МГц — стабільно для SX1278)
+	// Configure SPI1 (72 MHz / 16 = 4.5 MHz — stable for SX1278)
 	SPI_I2S_DeInit(LORA_SPI);
 	spi.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
 	spi.SPI_Mode = SPI_Mode_Master;
@@ -134,47 +134,47 @@ void LoRa_WakeUp(void) {
 	SPI_Init(LORA_SPI, &spi);
 	SPI_Cmd(LORA_SPI, ENABLE);
 
-	// Переводимо трансивер з режиму Sleep у Standby (якщо він уже ініціалізований)
+	// Switch transceiver from Sleep to Standby mode (if already initialized)
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
 	my_delay_ms(2);
 }
 
 //*****************************************************************************
-// 2. Апаратне скидання та повна ініціалізація параметрів радіоканалу
-// freq_hz: частота в Гц (наприклад, 433000000UL для 433 МГц)
+// 2. Hardware reset and full initialization of radio channel parameters
+// freq_hz: frequency in Hz (e.g., 433000000UL for 433 MHz)
 //*****************************************************************************
 uint8_t LoRa_Init(uint32_t freq_hz) {
-	// Апаратний Reset модуля
+	// Hardware reset of the module
 	GPIO_ResetBits(LORA_CTRL_PORT, LORA_PIN_RST);
 	my_delay_ms(5);
 	GPIO_SetBits(LORA_CTRL_PORT, LORA_PIN_RST);
 	my_delay_ms(10);
 
-	// Перевірка зв'язку з чіпом (регістр 0x42 повинен повернути 0x12)
+	// Verify communication with the chip (register 0x42 must return 0x12)
 	if (LoRa_ReadReg(REG_VERSION) != 0x12) {
 		return ERROR_LORA_WRONG_VERSION;
 	}
 
-	// Перехід у Sleep для зміни режиму на LoRa
+	// Switch to Sleep mode to change mode to LoRa
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP);
 	my_delay_ms(2);
 
-	// Встановлення несучої частоти: Frf = (Freq * 2^19) / 32000000
+	// Set carrier frequency: Frf = (Freq * 2^19) / 32000000
 	uint64_t frf = ((uint64_t)freq_hz << 19) / 32000000ULL;
 	LoRa_WriteReg(REG_FRF_MSB, (uint8_t)(frf >> 16));
 	LoRa_WriteReg(REG_FRF_MID, (uint8_t)(frf >> 8));
 	LoRa_WriteReg(REG_FRF_LSB, (uint8_t)(frf >> 0));
 
-	// Базова адреса FIFO для передачі
+	// FIFO base address for transmission
 	LoRa_WriteReg(REG_FIFO_TX_BASE_ADDR, 0x00);
 
-	// Налаштування вихідної потужності: PA_BOOST, +17 дБм (0x8F)
-	// Для +20 дБм: PA_CONFIG = 0x8F та PA_DAC = 0x87
+	// Output power configuration: PA_BOOST, +17 dBm (0x8F)
+	// For +20 dBm: PA_CONFIG = 0x8F and PA_DAC = 0x87
 	LoRa_WriteReg(REG_PA_CONFIG, 0x8F);
-	LoRa_WriteReg(REG_OCP, 0x2B);       // Захист по струму 100 мА
-	LoRa_WriteReg(REG_PA_DAC, 0x84);    // Стандартний режим (+17 дБм)
+	LoRa_WriteReg(REG_OCP, 0x2B);       // 100 mA over-current protection
+	LoRa_WriteReg(REG_PA_DAC, 0x84);    // Default mode (+17 dBm)
 
-	// Налаштування модему:
+	// Modem configuration:
 	// Bandwidth = 125 kHz (0x70), Coding Rate = 4/5 (0x02), Explicit Header (0x00)
 	LoRa_WriteReg(REG_MODEM_CONFIG_1, 0x72);
 
@@ -184,17 +184,17 @@ uint8_t LoRa_Init(uint32_t freq_hz) {
 	// AGC Auto ON (0x04)
 	LoRa_WriteReg(REG_MODEM_CONFIG_3, 0x04);
 
-	// Преамбула: 8 символів
+	// Preamble: 8 symbols
 	LoRa_WriteReg(REG_PREAMBLE_MSB, 0x00);
 	LoRa_WriteReg(REG_PREAMBLE_LSB, 0x08);
 
-	// Sync Word (0x12 — приватна мережа, 0x34 — LoRaWAN)
+	// Sync Word (0x12 — private network, 0x34 — LoRaWAN)
 	LoRa_WriteReg(REG_SYNC_WORD, 0x12);
 
-	// 01 у бітах 7:6 -> TxDone на DIO0
+	// 01 in bits 7:6 -> TxDone on DIO0
 	LoRa_WriteReg(REG_DIO_MAPPING_1, 0x40);
 
-	// Перехід у режим очікування Standby
+	// Switch to Standby mode
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
 	my_delay_ms(2);
 
@@ -202,44 +202,44 @@ uint8_t LoRa_Init(uint32_t freq_hz) {
 }
 
 //*****************************************************************************
-// 3. Відправка пакету даних
+// 3. Send a data packet
 //*****************************************************************************
 uint8_t LoRa_SendPacket(const uint8_t *data, uint8_t len) {
 	uint16_t timeout = LORA_TX_TIMEOUT_MS;
 
 	if (len == 0) return ERROR_LORA_OK;
 
-	// Переводимо в Standby перед записом у FIFO
+	// Switch to Standby before writing to FIFO
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
 
-	// Встановлюємо вказівник FIFO на початок TX-буфера
+	// Set FIFO pointer to the start of the TX buffer
 	LoRa_WriteReg(REG_FIFO_ADDR_PTR, 0x00);
 	LoRa_WriteReg(REG_PAYLOAD_LENGTH, len);
 
-	// Записуємо байти пакета у FIFO
+	// Write packet bytes into FIFO
 	for (uint8_t i = 0; i < len; i++) {
 		LoRa_WriteReg(REG_FIFO, data[i]);
 	}
 
-	// Гарантуємо мапінг DIO0 на TxDone (01 у бітах 7:6) та очищаємо прапорці переривань у SX1278
+	// Ensure DIO0 is mapped to TxDone (01 in bits 7:6) and clear IRQ flags in SX1278
 	LoRa_WriteReg(REG_DIO_MAPPING_1, 0x40);
 	LoRa_WriteReg(REG_IRQ_FLAGS, 0xFF);
 
 #ifdef LORA_USE_DIO0_PIN
-	// Скидаємо апаратну заскочку EXTI безпосередньо перед стартом передачі
+	// Clear EXTI hardware latch right before starting transmission
 	EXTI->PR = LORA_DIO0_EXTI_LINE;
 #endif
 
-	// Запускаємо передачу (TX Mode)
+	// Start transmission (TX Mode)
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_TX);
 
-	// Чекаємо завершення передачі (TxDone)
+	// Wait for transmission completion (TxDone)
 	while (timeout--) {
 #ifdef LORA_USE_DIO0_PIN
-		// Ловимо або високий рівень (класичний SX1278), або заскочку EXTI (короткий імпульс)
+		// Catch either a high level (classic SX1278) or the EXTI latch (short pulse)
 		if ((GPIO_ReadInputDataBit(LORA_DIO0_PORT, LORA_PIN_DIO0) == Bit_SET) ||
 		    (EXTI->PR & LORA_DIO0_EXTI_LINE)) {
-			EXTI->PR = LORA_DIO0_EXTI_LINE; // Скидаємо заскочку записом 1
+			EXTI->PR = LORA_DIO0_EXTI_LINE; // Clear latch by writing 1
 			break;
 		}
 #else
@@ -250,10 +250,10 @@ uint8_t LoRa_SendPacket(const uint8_t *data, uint8_t len) {
 		my_delay_ms(1);
 	}	
 	
-	// Очищаємо прапорець TxDone у трансивері
+	// Clear TxDone flag in the transceiver
 	LoRa_WriteReg(REG_IRQ_FLAGS, IRQ_TX_DONE_MASK);
 
-	// Повертаємо в Standby
+	// Return to Standby
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
 
 	if (timeout == 0) {
@@ -264,13 +264,13 @@ uint8_t LoRa_SendPacket(const uint8_t *data, uint8_t len) {
 }
 
 //*****************************************************************************
-// 4. Переведення SX1278 у глибокий сон (~0.2 мкА) та вимкнення SPI1
+// 4. Put SX1278 into deep sleep (~0.2 uA) and disable SPI1
 //*****************************************************************************
 void LoRa_Sleep(void) {
-	// Команда переходу в Sleep Mode по SPI
+	// Command to enter Sleep Mode via SPI
 	LoRa_WriteReg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP);
 
-	// Вимикаємо SPI1
+	// Disable SPI1
 	SPI_Cmd(LORA_SPI, DISABLE);
 	RCC_APB2PeriphClockCmd(LORA_SPI_CLK, DISABLE);
 }

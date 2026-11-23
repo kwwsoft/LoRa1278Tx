@@ -1,24 +1,24 @@
 #include "stm32f10x.h"
 #include "stm32f10x_adc.h"              // Keil::Device:StdPeriph Drivers:ADC
 
-#include <stdio.h> // Для sprintf
+#include <stdio.h> // For sprintf
 #include "vdda.h"
 
 //*****************************************************************************
-// Типове значення Vrefint у мілівольтах (1.20 В = 1200 мВ)
+// Typical Vrefint value in millivolts (1.20 V = 1200 mV)
 //#define VREFINT_MV  1200UL 
-//для цього чіпа виміряне
+// Measured for this specific chip
 #define VREFINT_MV  1215UL 
 
 //*****************************************************************************
 void my_ADC_Vref_Init(void) {
     ADC_InitTypeDef ADC_InitStructure;
 
-    // 1. Тактування ADC1 (72 МГц / 6 = 12 МГц, макс. допустима для F1 — 14 МГц)
+    // 1. ADC1 clocking (72 MHz / 6 = 12 MHz, max allowed for F1 is 14 MHz)
     RCC_ADCCLKConfig(RCC_PCLK2_Div6);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
 
-    // 2. Конфігурація АЦП
+    // 2. ADC configuration
     ADC_DeInit(ADC1);
     ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
     ADC_InitStructure.ADC_ScanConvMode = DISABLE;
@@ -28,10 +28,10 @@ void my_ADC_Vref_Init(void) {
     ADC_InitStructure.ADC_NbrOfChannel = 1;
     ADC_Init(ADC1, &ADC_InitStructure);
 
-    // 3. Вмикаємо внутрішнє опорне джерело Vrefint
+    // 3. Enable internal reference source Vrefint
     ADC_TempSensorVrefintCmd(ENABLE);
 
-    // 4. Вмикаємо АЦП та проводимо калібрування
+    // 4. Enable ADC and perform calibration
     ADC_Cmd(ADC1, ENABLE);
 
     ADC_ResetCalibration(ADC1);
@@ -41,12 +41,12 @@ void my_ADC_Vref_Init(void) {
     while (ADC_GetCalibrationStatus(ADC1));
 }
 //*****************************************************************************
-// Повертає напругу живлення у мілівольтах (наприклад, 3290 мВ)
+// Returns supply voltage in millivolts (e.g., 3290 mV)
 uint16_t my_Get_Supply_Voltage_mV(void) {
     uint32_t adc_sum = 0;
     const uint8_t samples = 16;
 
-    // Налаштовуємо 17-й канал (Vrefint) з максимальним часом вибірки
+    // Configure channel 17 (Vrefint) with maximum sample time
     ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 1, ADC_SampleTime_239Cycles5);
 
     for (uint8_t i = 0; i < samples; i++) {
@@ -59,12 +59,10 @@ uint16_t my_Get_Supply_Voltage_mV(void) {
 
     if (adc_avg == 0) return 0;
 
-    // Цілочисельний розрахунок у мілівольтах
-    // Використовуємо 32-бітні числа (UL), щоб уникнути переповнення при множенні
+    // Integer calculation in millivolts
+    // Use 32-bit integers (UL) to prevent overflow during multiplication
     uint16_t vdda_mv = (uint16_t)((VREFINT_MV * 4095UL) / adc_avg);
     
     return vdda_mv;
 }
 //*****************************************************************************
-
-

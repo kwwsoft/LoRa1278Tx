@@ -32,8 +32,8 @@ int main(){
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
 	//
 	myDebugInitLedPC13AndOFF();
-	// Дозволити відлагодження (ST-Link) у режимах SLEEP, STOP та STANDBY
-	// перевіряємо джампер BOOT1 (PB2) і налаштовуємо DBGMCU
+	// Allow debugging (ST-Link) in SLEEP, STOP, and STANDBY modes
+	// check the BOOT1 (PB2) jumper and configure DBGMCU
 	myDebugUpdateMode();
 	//init delay lib
 	my_delay_TIM2_init();
@@ -50,7 +50,7 @@ int main(){
 	myDebugShowRTCDateTime();
 	//LoRa SX1278
 	LoRa_WakeUp();
-  retcode = LoRa_Init(433000000UL); // Вкажіть вашу частоту (433E6 або 868E6)
+  retcode = LoRa_Init(433000000UL); // Specify your frequency (433E6 or 868E6)
   myDebugLoRaStatus(retcode);
   LoRa_Sleep();
 
@@ -121,7 +121,7 @@ int main(){
 
 
 
-		// Передача пакету по LoRa
+		// Transmit the packet via LoRa
 		LoRa_WakeUp();
 		retcode = LoRa_SendPacket((uint8_t*)&myTXpacket, sizeof(LoRa_Packet_t));
 		myDebugLoRaStatus(retcode);
@@ -132,13 +132,13 @@ int main(){
 		
 		
 
-		//Деініціалізуємо датчики та переводимо всі порти в режим низького споживання
+		// Deinitialize sensors and switch all ports to low-power mode
 		my_PrepareForStop();
-		// 4. Засинаємо точно до початку наступної години (XX:00:00)
+		// 4. Sleep until the exact start of the next hour (XX:00:00)
 		//my_RTC_EnterStopUntilNextHour();
 		my_RTC_EnterStopSeconds(6);
 		//minimum baseline immediately upon waking
-		// перевіряємо джампер BOOT1 (PB2) і налаштовуємо DBGMCU
+		// check the BOOT1 (PB2) jumper and configure DBGMCU
 		myDebugUpdateMode();
 		myDebugInitUart();
 		myDebugSendBuffer("WakeUp after Sleep\r\n");

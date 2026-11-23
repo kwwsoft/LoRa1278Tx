@@ -22,20 +22,20 @@
 //*****************************************************************************
 static uint8_t debug_active = 0;
 //*****************************************************************************
-// Перевірка джампера BOOT1 (PB2) та налаштування DBGMCU
+// Check BOOT1 (PB2) jumper and configure DBGMCU
 //*****************************************************************************
 void myDebugUpdateMode(void) {
 	GPIO_InitTypeDef port;
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
-	// Налаштовуємо PB2 як вхід (на платі Blue Pill вже є резистор 100 кОм до джампера BOOT1)
+	// Configure PB2 as input (Blue Pill board already has a 100 kOhm resistor to the BOOT1 jumper)
 	port.GPIO_Pin = GPIO_Pin_2;
 	port.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	port.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_Init(GPIOB, &port);
 
-	// Коротка пауза для стабілізації рівня
+	// Short delay for level stabilization
 	for (volatile uint16_t i = 0; i < 100; i++);
 
 	if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_2) == Bit_SET) {
@@ -46,7 +46,7 @@ void myDebugUpdateMode(void) {
 		DBGMCU->CR &= ~(DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY);
 	}
 
-	// Переводимо PB2 назад у Analog Input, щоб не було витоку струму у сні
+	// Switch PB2 back to Analog Input to prevent current leakage during sleep
 	port.GPIO_Mode = GPIO_Mode_AIN;
 	GPIO_Init(GPIOB, &port);
 }
@@ -185,10 +185,10 @@ void myDebugShowLoRaPacket(const LoRa_Packet_t *pkt){
         return;
     }
 
-    // Буфер під весь текст пакета (із запасом, реальний текст ~190 байт)
+    // Buffer for the entire packet text (with margin, actual text ~190 bytes)
     char buf[240];
 
-    // Безпечне зчитування з packed-структури у вирівняні змінні
+    // Safe read from packed structure into aligned variables
     uint32_t ts      = pkt->timestamp;
     uint16_t press   = pkt->press_mmhg_x10;
     int16_t  temp    = pkt->temp_x100;
@@ -234,14 +234,14 @@ void myDebugShowRawPacket(const void *data, uint16_t len){
     uint8_t is_lora_pkt = (len == sizeof(LoRa_Packet_t)) ? 1 : 0;
 
     for (uint16_t i = 0; i < len; i++) {
-        // Залишаємо запас місця під "| ", "...\r\n\0" (мінімум 8 байт)
+        // Leave enough space for "| ", "...\r\n\0" (minimum 8 bytes)
         if (offset >= (int)(sizeof(buf) - 8)) {
             offset += snprintf(buf + offset, sizeof(buf) - offset, "...");
             break;
         }
 
-        // Якщо це наша 14-байтна структура LoRa_Packet_t — відділяємо поля рискою
-        // Межі полів: [0..3] time | [4..5] press | [6..7] temp | [8..9] vbat | [10..11] res | [12..13] crc
+        // If this is our 14-byte LoRa_Packet_t structure — separate fields with a vertical bar
+        // Field boundaries: [0..3] time | [4..5] press | [6..7] temp | [8..9] vbat | [10..11] res | [12..13] crc
         if (is_lora_pkt && (i == 4 || i == 6 || i == 8 || i == 10 || i == 12)) {
             offset += snprintf(buf + offset, sizeof(buf) - offset, "| ");
         }
@@ -280,4 +280,3 @@ void myDebugLoRaStatus(uint8_t retcode) {
 
 #endif
 //*****************************************************************************
-

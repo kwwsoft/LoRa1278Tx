@@ -36,32 +36,32 @@
 #define ERROR_BMP280_MEASUREMENT_TIMEOUT			9
 #define ERROR_BMP280_READ_DATA								10
 //*****************************************************************************
-// Коди помилок LoRa
+// LoRa error codes
 //*****************************************************************************
 #define ERROR_LORA_OK               0
-#define ERROR_LORA_WRONG_VERSION    1   // Неправильний ID чіпа (очікується 0x12)
-#define ERROR_LORA_TX_TIMEOUT       2   // Таймаут очікування завершення передачі
+#define ERROR_LORA_WRONG_VERSION    1   // Wrong chip ID (expected 0x12)
+#define ERROR_LORA_TX_TIMEOUT       2   // Timeout waiting for transmission completion
 //*****************************************************************************
-// Проста структура для зручної роботи з датою та часом
+// Simple structure for convenient date and time handling
 typedef struct {
-	uint16_t year;   // Наприклад, 2026
+	uint16_t year;   // e.g., 2026
 	uint8_t  month;  // 1..12
 	uint8_t  day;    // 1..31
 	uint8_t  hour;   // 0..23
 	uint8_t  min;    // 0..59
 	uint8_t  sec;    // 0..59
-	uint8_t  wday;   // День тижня: 0 = Нд, 1 = Пн .. 6 = Сб
+	uint8_t  wday;   // Day of the week: 0 = Sun, 1 = Mon .. 6 = Sat
 } RTC_DateTime_t;
 //*****************************************************************************
 //structure for broadcast
 typedef struct __attribute__((packed)) {
-	uint32_t timestamp;      // 4 байти: Unix час із RTC_GetCounter()
-	uint16_t press_mmhg_x10; // 2 байти: Тиск у мм рт. ст. * 10 (наприклад, 7542 = 754.2 мм рт. ст.)
-	int16_t  temp_x100;      // 2 байти: Температура * 100 (наприклад, 2345 = 23.45 °C)
-	uint16_t vbat_mv;        // 2 байти: Напруга батарейок AA у мВ (наприклад, 3150 = 3.15 В)
-	uint8_t  RTC_error;      // 1 байт код помилки часів або 0 якщо гут
-	uint8_t  bmp280_error;   // 1 байт код помилки датчика ВМР280 або 0 якщо гут
-	uint16_t crc16;          // 2 байти: Контрольна сума CRC-16/MODBUS (по перших 12 байтах)
+	uint32_t timestamp;      // 4 bytes: Unix time from RTC_GetCounter()
+	uint16_t press_mmhg_x10; // 2 bytes: Pressure in mmHg * 10 (e.g., 7542 = 754.2 mmHg)
+	int16_t  temp_x100;      // 2 bytes: Temperature * 100 (e.g., 2345 = 23.45 °C)
+	uint16_t vbat_mv;        // 2 bytes: AA battery voltage in mV (e.g., 3150 = 3.15 V)
+	uint8_t  RTC_error;      // 1 byte: RTC error code, or 0 if OK
+	uint8_t  bmp280_error;   // 1 byte: BMP280 sensor error code, or 0 if OK
+	uint16_t crc16;          // 2 bytes: CRC-16/MODBUS checksum (over the first 12 bytes)
 } LoRa_Packet_t;
 //********************************************************************************************
 //The LED turns on if any function returns an error during operation. 
