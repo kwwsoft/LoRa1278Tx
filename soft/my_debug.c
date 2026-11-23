@@ -189,24 +189,24 @@ void myDebugShowLoRaPacket(const LoRa_Packet_t *pkt){
     char buf[240];
 
     // Безпечне зчитування з packed-структури у вирівняні змінні
-    uint32_t ts    = pkt->timestamp;
-    uint16_t press = pkt->press_mmhg_x10;
-    int16_t  temp  = pkt->temp_x100;
-    uint16_t vbat  = pkt->vbat_mv;
-    uint16_t res   = pkt->reserved;
-    uint16_t crc   = pkt->crc16;
+    uint32_t ts      = pkt->timestamp;
+    uint16_t press   = pkt->press_mmhg_x10;
+    int16_t  temp    = pkt->temp_x100;
+    uint16_t vbat    = pkt->vbat_mv;
+    uint8_t  rtc_err = pkt->RTC_error;
+    uint8_t  bmp_err = pkt->bmp280_error;
+    uint16_t crc     = pkt->crc16;
 
     char temp_sign = (temp < 0) ? '-' : '+';
     uint16_t temp_abs = (temp < 0) ? (uint16_t)(-temp) : (uint16_t)temp;
 
-    // Формуємо весь вивід за один раз
     snprintf(buf, sizeof(buf),
              "=== LoRa Packet (%u B) ===\r\n"
              "  Time  : %u\r\n"
              "  Press : %u.%u mmHg (%u)\r\n"
              "  Temp  : %c%u.%02u C (%d)\r\n"
              "  Vbat  : %u.%03u V (%u mV)\r\n"
-             "  Res   : 0x%04X\r\n"
+             "  Err   : RTC=%u, BMP=%u\r\n"
              "  CRC16 : 0x%04X\r\n"
              "==========================\r\n",
              (unsigned int)sizeof(LoRa_Packet_t),
@@ -214,7 +214,7 @@ void myDebugShowLoRaPacket(const LoRa_Packet_t *pkt){
              press / 10, press % 10, press,
              temp_sign, temp_abs / 100, temp_abs % 100, temp,
              vbat / 1000, vbat % 1000, vbat,
-             res,
+             rtc_err, bmp_err,
              crc);
 
     my_usart_send_buffer(buf);

@@ -24,6 +24,7 @@ uint8_t bmp280_init_count;
 int main(){
 	int32_t temp_x100 = 0;
 	uint32_t press_pa = 0;
+	uint8_t rtc_init_status;
 	RTC_DateTime_t now;
 	LoRa_Packet_t myTXpacket;
 	//remap PA15 and PB3 from JTAG to normal pins
@@ -39,8 +40,8 @@ int main(){
 	//init usart module
 	myDebugInitUart();
 	//init rtc for sleep and date/time
-	retcode = my_RTC_Clock_Init();
-	myDebugRTCFailed(retcode);
+	rtc_init_status = my_RTC_Clock_Init();
+	myDebugRTCFailed(rtc_init_status);
 	//read date
 	//my_RTC_GetDateTime(&now);
 	//if date is wrong - set compilation date/time
@@ -102,7 +103,9 @@ int main(){
 		my_ADC_Vref_Init();
 		myTXpacket.vbat_mv = my_Get_Supply_Voltage_mV();
 		//--- measure the voltage of the power battery --- end
-	
+		//
+		myTXpacket.RTC_error = rtc_init_status;
+		myTXpacket.bmp280_error = retcode;
 		
 		
 
