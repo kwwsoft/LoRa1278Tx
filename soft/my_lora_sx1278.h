@@ -19,8 +19,8 @@
 //  еруюч≥ п≥ни (можна зм≥нити п≥д вашу розводку)
 #define LORA_CTRL_PORT              GPIOA
 #define LORA_CTRL_PORT_CLK          RCC_APB2Periph_GPIOA
-#define LORA_PIN_NSS                GPIO_Pin_4   // Chip Select (CS)
-#define LORA_PIN_RST                GPIO_Pin_3   // Reset
+#define LORA_PIN_NSS                GPIO_Pin_2   // Chip Select (CS)
+#define LORA_PIN_RST                GPIO_Pin_4   // Reset
 
 // ¬икористанн€ апаратного п≥ну DIO0 через заскочку EXTI (ловить нав≥ть коротк≥ ≥мпульси).
 // якщо DIO0 не п≥дключений ф≥зично Ч закоментуйте р€док нижче,
@@ -31,9 +31,9 @@
 	#define LORA_DIO0_PORT          GPIOA
 	#define LORA_DIO0_PORT_CLK      RCC_APB2Periph_GPIOA
 	#define LORA_DIO0_PORT_SOURCE   GPIO_PortSourceGPIOA
-	#define LORA_DIO0_PIN_SOURCE    GPIO_PinSource2
-	#define LORA_PIN_DIO0           GPIO_Pin_2
-	#define LORA_DIO0_EXTI_LINE     EXTI_Line2
+	#define LORA_DIO0_PIN_SOURCE    GPIO_PinSource3
+	#define LORA_PIN_DIO0           GPIO_Pin_3
+	#define LORA_DIO0_EXTI_LINE     EXTI_Line3
 #endif
 
 //*****************************************************************************

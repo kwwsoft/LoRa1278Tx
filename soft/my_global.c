@@ -26,6 +26,7 @@ void my_PrepareForStop(void){
 	GPIO_InitTypeDef GPIO_InitStructure;
 
 	// 1. Вимикаємо АЦП, якщо використовувався (інакше він жере ~150 мкА у сні)
+	ADC_TempSensorVrefintCmd(DISABLE);
 	ADC_Cmd(ADC1, DISABLE);
 	ADC_Cmd(ADC2, DISABLE);
 
@@ -40,8 +41,13 @@ void my_PrepareForStop(void){
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
 
 	// Порт A: залишаємо PA13 (SWDIO) та PA14 (SWCLK), щоб не втратити можливість прошивки без кнопки Reset
-	// Якщо хочете абсолютний мінімум струму в релізі — можна додати і їх
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All & ~(GPIO_Pin_13 | GPIO_Pin_14);
+	// Залишаємо PA13, PA14 для SWD, а PA2 (NSS LoRa) не переводимо в AIN
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All & ~(GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_2);
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	// Підтягуємо NSS (PA2) до 3.3В, щоб вхід SPI на SX1278 не "бовтався" в повітрі
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	// Порти B, C, D: переводимо повністю в AIN (включаючи PC13 світлодіод)
